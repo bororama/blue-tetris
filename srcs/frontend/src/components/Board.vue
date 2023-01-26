@@ -1,32 +1,13 @@
 <script setup lang="ts">
-import	constants from './constants.ts';
+import	constants from './constants';
+import	{ board } from './board';
 import { ref, onMounted } from 'vue';
 
-function startGame(){
-	console.log("game-loop would start here");
-}
 
-class Board {
-	cols: number;
-	rows: number;
-	width: number;
-	height: number;
-	canvas: HTMLCanvasElement;
-}
-
-
-let boardReference = ref(null);
-const board = new Board();
-
-board.cols = constants.COLS;
-board.rows = constants.ROWS;
-board.width = constants.COLS * constants.BLOCK_SIZE;
-board.height = constants.ROWS * constants.BLOCK_SIZE;
+let boardReference = ref<HTMLCanvasElement>();
 
 onMounted( ():void => {
-	board.canvas = boardReference.value.getContext('2d');
-	board.canvas.scale(constants.BLOCK_SIZE, constants.BLOCK_SIZE);
-
+	board.value.canvasInit(boardReference.value!);
 });
 
 </script>

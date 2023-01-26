@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Board from './components/Board.vue'
+import { board } from './components/board'
 
 function play(): void{
 	/* the match-up part should prolly happen here */
@@ -15,8 +16,8 @@ const gameBoard = ref<InstanceType<typeof Board>>();
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Press+Start+2P"/>
 </head>
 <h1>TETRIS</h1>
-<Board ref="gameBoard"/>
-<button @click="$refs.gameBoard.startGame()" class="play-button">Play</button>
+<Board/>
+<button @click="board.startGame()" class="play-button">Play</button>
 </template>
 
 <style>
