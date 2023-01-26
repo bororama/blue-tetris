@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import Board from './components/Board.vue'
+
+function play(): void{
+	/* the match-up part should prolly happen here */
+	Board
+}
+
+const gameBoard = ref<InstanceType<typeof Board>>();
 </script>
 
 <template>
@@ -7,7 +15,8 @@ import Board from './components/Board.vue'
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Press+Start+2P"/>
 </head>
 <h1>TETRIS</h1>
-<Board />
+<Board ref="gameBoard"/>
+<button @click="$refs.gameBoard.startGame()" class="play-button">Play</button>
 </template>
 
 <style>
@@ -19,8 +28,16 @@ import Board from './components/Board.vue'
 	box-sizing: border-box;
 }
 
-h1, p
+h1, p, .play-button
 {
 	font-family: 'Press Start 2P', cursive;
+}
+
+.play-button
+{
+	background-color: #4caf50;
+	font-size: 16px;
+	padding: 15px 30px;
+	cursor: pointer;
 }
 </style>

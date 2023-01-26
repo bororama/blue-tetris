@@ -2,6 +2,10 @@
 import	constants from './constants.ts';
 import { ref, onMounted } from 'vue';
 
+function startGame(){
+	console.log("game-loop would start here");
+}
+
 class Board {
 	cols: number;
 	rows: number;
@@ -19,9 +23,10 @@ board.rows = constants.ROWS;
 board.width = constants.COLS * constants.BLOCK_SIZE;
 board.height = constants.ROWS * constants.BLOCK_SIZE;
 
-onMounted( () => {
+onMounted( ():void => {
 	board.canvas = boardReference.value.getContext('2d');
 	board.canvas.scale(constants.BLOCK_SIZE, constants.BLOCK_SIZE);
+
 });
 
 </script>
@@ -40,9 +45,22 @@ onMounted( () => {
 
 <style scoped>
 
+.grid
+{
+	display: grid;
+	grid-template-columns: 320px 200px;
+}
+
+.right-column
+{
+	display: flex;
+	flex-direction: column;
+}
+
 .board
 {
 	border: 3px solid red;/* for testing purposes */
 }
+
 
 </style>
