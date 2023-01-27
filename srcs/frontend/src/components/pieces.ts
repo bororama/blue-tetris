@@ -45,4 +45,4 @@ class Jtetromino extends Tetromino{
 }
 
 
-export  {Jtetromino};
+export  {Tetromino, Jtetromino};

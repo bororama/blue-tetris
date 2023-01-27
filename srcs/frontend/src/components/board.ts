@@ -1,17 +1,17 @@
 import	constants from './constants';
 import	{ ref, resolveTransitionHooks } from 'vue';
 import  { Vector2 } from './constants'
-import  { Jtetromino } from './pieces';
+import  { Tetromino, Jtetromino } from './pieces';
 
 
 
 const moves = {
-	ArrowLeft : (p : Jtetromino) : Vector2 =>  new Vector2(p.position.x - 1, p.position.y),
-	ArrowRight : (p : Jtetromino) : Vector2 =>  new Vector2(p.position.x + 1, p.position.y),
-	ArrowDown : (p : Jtetromino) : Vector2 =>  new Vector2(p.position.x, p.position.y + 1),
-/* 	[KEY.LEFT] : (p : Jtetromino) : Vector2 => {...p, x: p.x - 1},
-	[KEY.LEFT] : (p : Jtetromino) : Vector2 => {...p, x: p.x - 1},*/
+	ArrowLeft : (p : Tetromino) : Vector2 =>  new Vector2(p.position.x - 1, p.position.y),
+	ArrowRight : (p : Tetromino) : Vector2 =>  new Vector2(p.position.x + 1, p.position.y),
+	ArrowDown : (p : Tetromino) : Vector2 =>  new Vector2(p.position.x, p.position.y + 1),
 }
+
+
 
 class Board {
 	cols: number;
@@ -20,7 +20,7 @@ class Board {
 	height: number;
 	canvas: CanvasRenderingContext2D | null;
 	grid: Array<Array<number>>;
-	piece: Jtetromino | null;
+	piece: Tetromino | null;
 	
 	constructor	(){
 		this.cols = constants.COLS;
@@ -49,20 +49,46 @@ class Board {
 			e.preventDefault();
 			
 			const pressedKey = e.key as keyof typeof moves;
-			console.log(`keycode ${ e.key}`);
-			console.log(`keyPressed ${ pressedKey}`);
 			let p = moves[pressedKey](this.piece!)
-			this.piece!.move(p);
-			this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
-
-			this.piece?.draw();
+			if (this.validPosition(this.piece! , p))
+			{
+				this.piece!.move(p);
+				this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
+				this.piece?.draw();
+			}
 		})
-		console.log("game-loop would start here");
 		console.table(this.grid);
 		this.reset();
 		let piece = new Jtetromino(this.canvas!);
 		piece.draw();
 		this.piece = piece;
+	}
+
+	validPosition(piece: Tetromino, newPosition : Vector2) : boolean {
+		let isValid: boolean = true;
+		piece.shape.forEach((row, dy)=> {
+			let y = newPosition.y + dy;
+			row.forEach((value, dx) => {
+				if (value) {
+					let x = newPosition.x + dx;
+					if (! (this.insideWalls(x) && this.aboveFloor(y))){
+						isValid = false;
+						return isValid;	
+					}
+				}
+			});
+			if (!isValid)
+				return isValid;
+		});
+		return isValid;
+	}
+
+	aboveFloor(y : number): boolean{
+		console.log(`floor now ${y}`);
+		return (y < this.rows);
+	}
+	insideWalls(x : number): boolean{
+		return (0 <= x && x < this.cols);
 	}
 }
 
