@@ -21,7 +21,6 @@ const gameBoard = ref<InstanceType<typeof Board>>();
 </template>
 
 <style>
-
 *
 {
 	margin: 0px;
