@@ -2,16 +2,24 @@ import	constants from './constants';
 import	{ ref, resolveTransitionHooks } from 'vue';
 import  { Vector2 } from './constants'
 import  { Tetromino, Jtetromino } from './pieces';
+import _ from 'lodash'
 
-
-
-const moves = {
-	ArrowLeft : (p : Tetromino) : Vector2 =>  new Vector2(p.position.x - 1, p.position.y),
-	ArrowRight : (p : Tetromino) : Vector2 =>  new Vector2(p.position.x + 1, p.position.y),
-	ArrowDown : (p : Tetromino) : Vector2 =>  new Vector2(p.position.x, p.position.y + 1),
+function clone(original : Tetromino) : Tetromino {
+	return JSON.parse(JSON.stringify(original));
 }
 
+type move = (p : Tetromino) => void;
+class Moves {
+	ArrowLeft : move;
+	ArrowRight : move;
+	ArrowDown : move;
 
+	constructor (){
+		this.ArrowLeft = (p : Tetromino) =>  p.position.x -= 1;
+		this.ArrowRight = (p : Tetromino) => p.position.x += 1;
+		this.ArrowDown = (p : Tetromino)  =>  p.position.y += 1;
+	}
+}
 
 class Board {
 	cols: number;
@@ -20,7 +28,8 @@ class Board {
 	height: number;
 	canvas: CanvasRenderingContext2D | null;
 	grid: Array<Array<number>>;
-	piece: Tetromino | null;
+	activePiece: Tetromino | null;
+	moves: Moves;
 	
 	constructor	(){
 		this.cols = constants.COLS;
@@ -29,7 +38,8 @@ class Board {
 		this.height = constants.ROWS * constants.BLOCK_SIZE;
 		this.canvas = null;
 		this.grid = this.getEmptyBoardGrid();
-		this.piece = null;
+		this.activePiece = null;
+		this.moves = new Moves;
 	}
 
 	canvasInit(canvas: HTMLCanvasElement): void{
@@ -41,36 +51,60 @@ class Board {
 			{length: constants.ROWS}, (): Array<number> => Array(constants.COLS).fill(0)
 		);
 	}
-	reset(): void {
+	reset(): void {
 		this.grid = this.getEmptyBoardGrid();
-	}	
-	startGame(): void{
+	}
+	startGame(): void {
 		window.addEventListener('keydown', e => {
+			let newPosition : Tetromino;
 			e.preventDefault();
 			
-			const pressedKey = e.key as keyof typeof moves;
-			let p = moves[pressedKey](this.piece!)
-			if (this.validPosition(this.piece! , p))
-			{
-				this.piece!.move(p);
+			newPosition = _.cloneDeep(this.activePiece!);
+			console.log(`Key :"${e.key}"`);
+			if (e.key === ' '){
+				console.log("wut");
+				/*this.hardDrop(this.activePiece!);*/
+			} else {
+				const pressedKey = e.key as keyof typeof this.moves;
+				this.moves[pressedKey](newPosition)
+			}
+			if (this.validPosition(newPosition)){
+				this.activePiece = newPosition;
+				console.table(this.activePiece);
 				this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
-				this.piece?.draw();
+				this.activePiece.draw();
 			}
 		})
-		console.table(this.grid);
+		/*console.table(this.grid);*/
 		this.reset();
 		let piece = new Jtetromino(this.canvas!);
-		piece.draw();
-		this.piece = piece;
+		this.activePiece = piece;
+		this.activePiece.draw();
 	}
 
-	validPosition(piece: Tetromino, newPosition : Vector2) : boolean {
+/*	hardDrop(piece : Tetromino) : Vector2 {
+		let position : Vector2;
+		let nextPosition : Vector2;
+
+		console.log('dropping hard');
+		console.table(this);
+		position = piece.position;
+		nextPosition = this.moves.ArrowDown(piece);
+		while (this.validPosition(piece)){
+			position = nextPosition;
+			piece.move(position);
+			nextPosition = this.moves.ArrowDown(piece);
+		}
+		return position;
+	}*/
+
+	validPosition(piece: Tetromino) : boolean {
 		let isValid: boolean = true;
 		piece.shape.forEach((row, dy)=> {
-			let y = newPosition.y + dy;
+			let y = piece.position.y + dy;
 			row.forEach((value, dx) => {
 				if (value) {
-					let x = newPosition.x + dx;
+					let x = piece.position.x + dx;
 					if (! (this.insideWalls(x) && this.aboveFloor(y))){
 						isValid = false;
 						return isValid;	
@@ -84,7 +118,6 @@ class Board {
 	}
 
 	aboveFloor(y : number): boolean{
-		console.log(`floor now ${y}`);
 		return (y < this.rows);
 	}
 	insideWalls(x : number): boolean{
