@@ -17,7 +17,7 @@ const gameBoard = ref<InstanceType<typeof Board>>();
 </head>
 <h1>TETRIS</h1>
 <Board/>
-<button @click="board.startGame()" class="play-button">Play</button>
+<button @click="board.startGameLoop()" class="play-button">Play</button>
 </template>
 
 <style>
