@@ -80,6 +80,7 @@ class Board {
 	color: Array<string>
 	account : any;
 	points : Array<number>;
+	requestId: number;
 
 	time = {
 		start: 0,
@@ -139,6 +140,8 @@ class Board {
 				return true;
 			}
 		});
+
+		this.requestId = 0;
 	}
 
 	canvasInit(canvas: HTMLCanvasElement): void{
@@ -169,7 +172,7 @@ class Board {
 
 	startGameLoop(): void {
 		if (this.initialize === true) {
-			window.addEventListener('keydown', e => {
+			window.addEventListener('keydown', e => {
 				let newPosition : Tetromino;
 				e.preventDefault();
 				
@@ -191,37 +194,51 @@ class Board {
 		this.activePiece = _.cloneDeep(this.pieceTemplate[Math.floor(Math.random() *  (this.pieceTemplate.length))]);
 		this.animate();
 	}
-
-
-
-	animate(now : number = 0){
+	
+	gameOver() {
+		cancelAnimationFrame(this.requestId);
+		this.canvas!.fillStyle = 'black';
+		this.canvas!.fillRect(1, 3, 8, 1.2);
+		this.canvas!.font = '1px Arial';
+		this.canvas!.fillStyle = 'red';
+		this.canvas!.fillText('GAME OVER', 1.8, 4);
+	}
+	
+	animate(now : number = 0) {
+		let checkContinuity : Boolean;
 		this.time.elapsed = now - this.time.start;
-
-		console.log(`level ${this.time.level}`);
+		
 		if (this.time.elapsed > this.time.level) {
 			this.time.start = now;
-
-			this.drop();
+			
+			checkContinuity = this.drop();
+			if (!checkContinuity){
+				return ;
+			}
 		}
-
+		
 		this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
-
+		
 		this.draw();
-		requestAnimationFrame(this.animate.bind(this));
+		this.requestId = requestAnimationFrame(this.animate.bind(this));
 	}
 
-	drop() : void {
+	drop() : boolean {
 		let	ghostPiece = _.cloneDeep(this.activePiece!);
 
 		this.moves['ArrowDown'](ghostPiece);
-		if (this.validPosition(ghostPiece)){
+		if (this.validPosition(ghostPiece)) {
 			this.activePiece = ghostPiece;
 		} else {
 			this.freeze();
 			this.clearLine();
-			this.activePiece = _.cloneDeep(this.pieceTemplate[Math.floor(Math.random() *  (this.pieceTemplate.length))]);
+			this.activePiece = _.cloneDeep(this.pieceTemplate[Math.floor(Math.random() * (this.pieceTemplate.length))]);
+			if (!this.validPosition(this.activePiece!)) {
+				this.gameOver();
+				return false;
+			}
 		}
-		//console.table(this.grid);
+		return true;
 	}
 
 	getLineClearPoints(linesCleared : number) {
@@ -248,6 +265,7 @@ class Board {
 			this.time.level = GAME_SYSTEM.LEVEL[this.account.level];
 		}
 	}
+
 	freeze() {
 		this.activePiece?.shape.forEach((row, y) => {
 			row.forEach((value, x) =>{
