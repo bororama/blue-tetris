@@ -1,4 +1,4 @@
-import	constants from './constants';
+import	constants, { GAME_SYSTEM } from './constants';
 import	{ ref, resolveTransitionHooks } from 'vue';
 import  { Vector2 } from './constants'
 import  { Tetromino, Jtetromino, Ltetromino, Itetromino, Otetromino, Ztetromino, Stetromino, Ttetromino } from './pieces';
@@ -78,12 +78,28 @@ class Board {
 	initialize : boolean;
 	pieceTemplate : Array<Tetromino | null>;
 	color: Array<string>
+	account : any;
+	points : Array<number>;
 
 	time = {
 		start: 0,
 		elapsed: 0,
 		level: 1000,
 	}
+
+	accountValues = {
+		score : 0,
+		lines: 0,
+		level: 0,
+	}
+
+	updateAccount(key: any, value: any) {
+		let element = document.getElementById(key);
+		if (element){
+			element.textContent = value;
+		}
+	}
+
 	constructor	(){
 		this.cols = constants.COLS;
 		this.rows = constants.ROWS;
@@ -113,6 +129,16 @@ class Board {
 			'purple',
 			'aquamarine',
 		]
+
+		this.points = GAME_SYSTEM.POINTS;
+
+		this.account = new Proxy(this.accountValues, {
+			set : (target : any, key: string | symbol, value: any) => {
+				target[key] = value;
+				this.updateAccount(key, value);
+				return true;
+			}
+		});
 	}
 
 	canvasInit(canvas: HTMLCanvasElement): void{
@@ -135,6 +161,10 @@ class Board {
 	}
 	reset(): void {
 		this.grid = this.getEmptyBoardGrid();
+		this.account.score = 0;
+		this.account.lines = 0;
+		this.account.level = 0;
+		this.time.level = GAME_SYSTEM.LEVEL[this.account.level];
 	}
 
 	startGameLoop(): void {
@@ -167,6 +197,7 @@ class Board {
 	animate(now : number = 0){
 		this.time.elapsed = now - this.time.start;
 
+		console.log(`level ${this.time.level}`);
 		if (this.time.elapsed > this.time.level) {
 			this.time.start = now;
 
@@ -193,13 +224,29 @@ class Board {
 		//console.table(this.grid);
 	}
 
+	getLineClearPoints(linesCleared : number) {
+		return this.points[linesCleared];
+	}
+
 	clearLine() {
+		let linesCleared : number;
+
+		linesCleared = 0;
 		this.grid.forEach((row, y) => {
 			if (row.every(value => {return (value > 0);})) {
 				this.grid.splice(y, 1);
 				this.grid.unshift(Array(this.cols).fill(0));
+				linesCleared++;
 			}
 		});
+		this.account.score += this.getLineClearPoints(linesCleared);
+		this.account.lines += linesCleared;
+		if (this.account.level < GAME_SYSTEM.MAX_LEVEL && this.account.lines >= GAME_SYSTEM.LINES_PER_LEVEL)
+		{
+			this.account.level++;
+			this.account.lines = 0;
+			this.time.level = GAME_SYSTEM.LEVEL[this.account.level];
+		}
 	}
 	freeze() {
 		this.activePiece?.shape.forEach((row, y) => {

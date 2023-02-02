@@ -44,5 +44,4 @@ onMounted( ():void => {
 	border: 3px solid red;/* for testing purposes */
 }
 
-
 </style>

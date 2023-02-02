@@ -18,4 +18,35 @@ export default {
 	BLOCK_SIZE: BLOCK_SIZE,
 }
 
-export  {Vector2};
+const POINTS = [
+	0, /* NO LINES */
+	100, /* SINGLE */
+	300, /* DOUBLE */
+	500, /* TRIPLE */
+	800, /* TETRIS */
+]
+
+const LINES_PER_LEVEL = 10;
+
+const LEVEL = [
+	800,
+	700,
+	600,
+	500,
+	400,
+	300,
+	200,	
+]
+
+const MAX_LEVEL = 7;
+
+const GAME_SYSTEM = {
+	POINTS : POINTS,
+	LINES_PER_LEVEL : LINES_PER_LEVEL,
+	LEVEL : LEVEL,
+	MAX_LEVEL : MAX_LEVEL,
+}
+
+Object.freeze(GAME_SYSTEM);
+
+export  {Vector2, GAME_SYSTEM};
