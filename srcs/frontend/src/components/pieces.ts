@@ -31,83 +31,87 @@ abstract class Tetromino{
         this.position.x = p.x;
         this.position.y = p.y;
     }
+
+    setColor(newColor : string) {
+        this.color = newColor;
+    }
 }
 
 class Jtetromino extends Tetromino{
-    constructor (canvas: CanvasRenderingContext2D){
+    constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
             [1, 0, 0],
             [1, 1, 1],
             [0, 0, 0],
         ];
-        super(canvas, 'blue', shape);
+        super(canvas, color, shape);
     }
 }
 
 class Ltetromino extends Tetromino{
-    constructor (canvas: CanvasRenderingContext2D){
+    constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
             [0, 0, 2],
             [2, 2, 2],
             [0, 0, 0],
         ];
-        super(canvas, 'orange', shape);
+        super(canvas, color, shape);
     }
 }
 
 
 class Otetromino extends Tetromino{
-    constructor (canvas: CanvasRenderingContext2D){
+    constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
             [3, 3],
             [3, 3],
         ];
-        super(canvas, 'yellow', shape);
+        super(canvas, color, shape);
     }
 }
 
 class Stetromino extends Tetromino{
-    constructor (canvas: CanvasRenderingContext2D){
+    constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
             [0, 0, 0],
             [0, 4, 4],
             [4, 4, 0],
         ];
-        super(canvas, 'green', shape);
+        super(canvas, color, shape);
     }
 }
 
 class Ztetromino extends Tetromino{
-    constructor (canvas: CanvasRenderingContext2D){
+    constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
             [0, 0, 0],
             [5, 5, 0],
             [0, 5, 5],
         ];
-        super(canvas, 'red', shape);
+        super(canvas, color, shape);
     }
 }
 
 class Ttetromino extends Tetromino{
-    constructor (canvas: CanvasRenderingContext2D){
+    constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
             [0, 0, 0],
             [6, 6, 6],
             [0, 6, 0],
         ];
-        super(canvas, 'purple', shape);
+        super(canvas, color, shape);
     }
 }
 
 class Itetromino extends Tetromino{
-    constructor (canvas: CanvasRenderingContext2D){
+    constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
             [0, 0, 7, 0],
             [0, 0, 7, 0],
             [0, 0, 7, 0],
             [0, 0, 7, 0],
         ];
-        super(canvas, 'aquamarine', shape);
+        super(canvas, color, shape);
     }
 }
 

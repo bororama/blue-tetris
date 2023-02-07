@@ -15,6 +15,7 @@ class Moves {
 	ArrowDown : move;
 	ArrowUp	: move;
 	'z' : move;
+	'a' : move;
 
 	constructor (){
 		this.ArrowLeft = (p : Tetromino) =>  p.position.x -= 1;
@@ -22,6 +23,7 @@ class Moves {
 		this.ArrowDown = (p : Tetromino)  =>  p.position.y += 1;
 		this.ArrowUp = this.rightRotation;
 		this.z = this.leftRotation;
+		this.a = this.doubleRotation;
 	}
 
 	rightRotation(p: Tetromino) {
@@ -34,6 +36,11 @@ class Moves {
 		this._reflectMatrixHorizontally(p.shape);
 
 	}
+	doubleRotation(p: Tetromino) {
+		this.leftRotation(p);
+		this.leftRotation(p);
+	}
+
 	private _transposeMatrix(m : Array<Array<number>>) {
 		let n : Array<Array<number>>
 
@@ -74,10 +81,12 @@ class Board {
 	canvas: CanvasRenderingContext2D | null;
 	grid: Array<Array<number>>;
 	activePiece: Tetromino | null;
+	shadowPiece: Tetromino | null;
+	hardDropped : boolean;
 	moves: Moves;
 	initialize : boolean;
 	pieceTemplate : Array<Tetromino | null>;
-	color: Array<string>
+	colorPalette: Array<string>
 	account : any;
 	points : Array<number>;
 	requestId: number;
@@ -109,6 +118,8 @@ class Board {
 		this.canvas = null;
 		this.grid = this.getEmptyBoardGrid();
 		this.activePiece = null;
+		this.shadowPiece = null;
+		this.hardDropped = false;
 		this.moves = new Moves;
 		this.initialize = true;
 		this.pieceTemplate = [ 
@@ -120,7 +131,7 @@ class Board {
 			null,
 			null,
 		];
-		this.color = [
+		this.colorPalette = [
 			'white',
 			'blue',
 			'orange',
@@ -148,13 +159,13 @@ class Board {
 		this.canvas = canvas.getContext('2d');
 		this.canvas!.scale(constants.BLOCK_SIZE, constants.BLOCK_SIZE);
 		this.pieceTemplate = [ 
-			new Jtetromino(this.canvas!),
-			new Ltetromino(this.canvas!),
-			new Stetromino(this.canvas!),
-			new Ztetromino(this.canvas!),
-			new Otetromino(this.canvas!),
-			new Ttetromino(this.canvas!),
-			new Itetromino(this.canvas!),
+			new Jtetromino(this.canvas!, this.colorPalette[1]),
+			new Ltetromino(this.canvas!, this.colorPalette[2]),
+			new Otetromino(this.canvas!, this.colorPalette[3]),
+			new Stetromino(this.canvas!, this.colorPalette[4]),
+			new Ztetromino(this.canvas!, this.colorPalette[5]),
+			new Ttetromino(this.canvas!, this.colorPalette[6]),
+			new Itetromino(this.canvas!, this.colorPalette[7]),
 		];
 	}
 	getEmptyBoardGrid(): Array<Array<number>> {
@@ -178,8 +189,9 @@ class Board {
 				
 				newPosition = _.cloneDeep(this.activePiece!);
 				console.log(`Key :"${e.key}"`);
-				if (e.key === ' '){
+				if (e.key === ' ') {
 					this.hardDrop(newPosition);
+					this.hardDropped = true;
 				} else {
 					const pressedKey = e.key as keyof typeof this.moves;
 					this.moves[pressedKey](newPosition)
@@ -192,7 +204,7 @@ class Board {
 		}
 		this.reset();
 		this.activePiece = _.cloneDeep(this.pieceTemplate[Math.floor(Math.random() *  (this.pieceTemplate.length))]);
-		this.animate();
+		this.gameLoop();
 	}
 	
 	gameOver() {
@@ -204,23 +216,28 @@ class Board {
 		this.canvas!.fillText('GAME OVER', 1.8, 4);
 	}
 	
-	animate(now : number = 0) {
+	gameLoop(now : number = 0) {
 		let checkContinuity : Boolean;
 		this.time.elapsed = now - this.time.start;
 		
-		if (this.time.elapsed > this.time.level) {
+		if (this.time.elapsed > this.time.level || this.hardDropped) {
+			console.log(`${this.hardDropped}`)
 			this.time.start = now;
-			
+			this.hardDropped = false;
+			//this should commence the endGameloop routine
 			checkContinuity = this.drop();
-			if (!checkContinuity){
+			if (!checkContinuity) {
 				return ;
 			}
 		}
 		
+		this.shadowPiece = _.cloneDeep(this.activePiece)
+		this.shadowPiece!.setColor('#09090909');
+		this.hardDrop(this.shadowPiece!);
+
 		this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
-		
 		this.draw();
-		this.requestId = requestAnimationFrame(this.animate.bind(this));
+		this.requestId = requestAnimationFrame(this.gameLoop.bind(this));
 	}
 
 	drop() : boolean {
@@ -313,11 +330,12 @@ class Board {
 	}
 	draw(){
 
+		this.shadowPiece!.draw();
 		this.activePiece!.draw();
 		for (let row = 0; row < this.rows; ++row){
 			for (let col = 0; col < this.cols; ++col){
 				if (this.grid[row][col]) {
-					this.canvas!.fillStyle = this.color[this.grid[row][col]];
+					this.canvas!.fillStyle = this.colorPalette[this.grid[row][col]];
 					this.canvas!.fillRect( col, row, 1, 1);
 				}
 			}
