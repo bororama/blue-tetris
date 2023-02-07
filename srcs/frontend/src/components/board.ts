@@ -21,56 +21,12 @@ class Moves {
 		this.ArrowLeft = (p : Tetromino) =>  p.position.x -= 1;
 		this.ArrowRight = (p : Tetromino) => p.position.x += 1;
 		this.ArrowDown = (p : Tetromino)  =>  p.position.y += 1;
-		this.ArrowUp = this.rightRotation;
-		this.z = this.leftRotation;
-		this.a = this.doubleRotation;
+		this.ArrowUp = (p : Tetromino) => p.rightRotation();
+		this.z = (p : Tetromino) => p.leftRotation();
+		this.a = (p : Tetromino) => p.doubleRotation();
 	}
 
-	rightRotation(p: Tetromino) {
-		this._transposeMatrix(p.shape);
-		this._reflectMatrixVertically(p.shape);
 
-	}
-	leftRotation(p: Tetromino) {
-		this._transposeMatrix(p.shape);
-		this._reflectMatrixHorizontally(p.shape);
-
-	}
-	doubleRotation(p: Tetromino) {
-		this.leftRotation(p);
-		this.leftRotation(p);
-	}
-
-	private _transposeMatrix(m : Array<Array<number>>) {
-		let n : Array<Array<number>>
-
-		n = JSON.parse(JSON.stringify(m));
-		for (let row = 0; row < m.length; ++row){
-			for (let col = 0; col < m.length; ++col){
-				m[row][col]  = n[col][row];
-			}
-		}
-	}
-	private _reflectMatrixVertically(m : Array <Array<number>>) {
-		let n : Array<Array<number>>
-
-		n = JSON.parse(JSON.stringify(m));
-		for (let row = 0; row < m.length; ++row){
-			for (let col = 0; col < m.length; ++col){
-				m[row][col]  = n[row][n.length - 1 - col];
-			}
-		}
-	}
-	private _reflectMatrixHorizontally(m : Array <Array<number>>) {
-		let n : Array<Array<number>>
-
-		n = JSON.parse(JSON.stringify(m));
-		for (let row = 0; row < m.length; ++row){
-			for (let col = 0; col < m.length; ++col){
-				m[row][col]  = n[n.length - 1 - row][col];
-			}
-		}
-	}
 }
 
 class Board {
@@ -79,10 +35,13 @@ class Board {
 	width: number;
 	height: number;
 	canvas: CanvasRenderingContext2D | null;
+	nextPieceCanvas : CanvasRenderingContext2D | null;
 	grid: Array<Array<number>>;
 	activePiece: Tetromino | null;
 	shadowPiece: Tetromino | null;
+	heldPiece: Tetromino | null;
 	hardDropped : boolean;
+	held : boolean;
 	moves: Moves;
 	initialize : boolean;
 	pieceTemplate : Array<Tetromino | null>;
@@ -90,6 +49,7 @@ class Board {
 	account : any;
 	points : Array<number>;
 	requestId: number;
+	pieceGenerator: Array<number>;
 
 	time = {
 		start: 0,
@@ -116,10 +76,13 @@ class Board {
 		this.width = constants.COLS * constants.BLOCK_SIZE;
 		this.height = constants.ROWS * constants.BLOCK_SIZE;
 		this.canvas = null;
+		this.nextPieceCanvas = null;
 		this.grid = this.getEmptyBoardGrid();
 		this.activePiece = null;
 		this.shadowPiece = null;
+		this.heldPiece = null;
 		this.hardDropped = false;
+		this.held = false;
 		this.moves = new Moves;
 		this.initialize = true;
 		this.pieceTemplate = [ 
@@ -153,11 +116,21 @@ class Board {
 		});
 
 		this.requestId = 0;
+
+		this.pieceGenerator = [1, 2, 3, 4, 5, 6, 7].sort((a, b) => 0.5 - Math.random());
 	}
 
 	canvasInit(canvas: HTMLCanvasElement): void{
 		this.canvas = canvas.getContext('2d');
 		this.canvas!.scale(constants.BLOCK_SIZE, constants.BLOCK_SIZE);
+		
+		let tmpCanvas = <HTMLCanvasElement> document.querySelector('.displayNextPiece');
+
+		this.nextPieceCanvas = tmpCanvas.getContext('2d');
+		this.nextPieceCanvas!.fillStyle = 'red';
+		this.nextPieceCanvas!.scale(30, 30);
+
+
 		this.pieceTemplate = [ 
 			new Jtetromino(this.canvas!, this.colorPalette[1]),
 			new Ltetromino(this.canvas!, this.colorPalette[2]),
@@ -188,7 +161,9 @@ class Board {
 				e.preventDefault();
 				
 				newPosition = _.cloneDeep(this.activePiece!);
-				console.log(`Key :"${e.key}"`);
+				if (e.key === 'c') {
+					this.holdPiece();
+				}
 				if (e.key === ' ') {
 					this.hardDrop(newPosition);
 					this.hardDropped = true;
@@ -203,7 +178,7 @@ class Board {
 			this.initialize = false;
 		}
 		this.reset();
-		this.activePiece = _.cloneDeep(this.pieceTemplate[Math.floor(Math.random() *  (this.pieceTemplate.length))]);
+		this.get_next_piece();
 		this.gameLoop();
 	}
 	
@@ -221,7 +196,6 @@ class Board {
 		this.time.elapsed = now - this.time.start;
 		
 		if (this.time.elapsed > this.time.level || this.hardDropped) {
-			console.log(`${this.hardDropped}`)
 			this.time.start = now;
 			this.hardDropped = false;
 			//this should commence the endGameloop routine
@@ -236,8 +210,38 @@ class Board {
 		this.hardDrop(this.shadowPiece!);
 
 		this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
+		this.nextPieceCanvas!.clearRect(0, 0, this.nextPieceCanvas!.canvas.width, this.nextPieceCanvas!.canvas.height);
 		this.draw();
 		this.requestId = requestAnimationFrame(this.gameLoop.bind(this));
+	}
+
+	pieceGenerationAlgorithm(): number {
+		let returnPiece = this.pieceGenerator.pop()! - 1;
+		if (this.pieceGenerator.length === 0) {
+			this.pieceGenerator = [1, 2, 3, 4, 5, 6, 7].sort((a, b) => 0.5 - Math.random());
+		}
+		return returnPiece;
+	}
+
+	get_next_piece() {
+		this.activePiece = _.cloneDeep(this.pieceTemplate[this.pieceGenerationAlgorithm()]);
+	}
+
+	holdPiece() {
+		let tmp : Tetromino;
+		if (this.held) {
+			return ;
+		}
+		tmp = this.activePiece!;
+		if (this.heldPiece === null) {
+			this.get_next_piece();
+		}
+		else {
+			this.activePiece = this.heldPiece;
+			this.activePiece.move(this.activePiece.spawnPosition);
+		}
+		this.heldPiece = tmp;
+		this.held = true;
 	}
 
 	drop() : boolean {
@@ -247,9 +251,10 @@ class Board {
 		if (this.validPosition(ghostPiece)) {
 			this.activePiece = ghostPiece;
 		} else {
+			this.held = false;
 			this.freeze();
 			this.clearLine();
-			this.activePiece = _.cloneDeep(this.pieceTemplate[Math.floor(Math.random() * (this.pieceTemplate.length))]);
+			this.get_next_piece();
 			if (!this.validPosition(this.activePiece!)) {
 				this.gameOver();
 				return false;
@@ -332,6 +337,7 @@ class Board {
 
 		this.shadowPiece!.draw();
 		this.activePiece!.draw();
+		this.pieceTemplate[this.pieceGenerator[this.pieceGenerator.length - 1] - 1]!.drawToContext(this.nextPieceCanvas!);
 		for (let row = 0; row < this.rows; ++row){
 			for (let col = 0; col < this.cols; ++col){
 				if (this.grid[row][col]) {

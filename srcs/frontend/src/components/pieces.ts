@@ -1,18 +1,31 @@
 import	constants from './constants';
-import type { Vector2 } from './constants'
+import { Vector2 } from './constants'
 import	{ ref } from 'vue'
 
 abstract class Tetromino{
+    spawnPosition: Vector2;
     position: Vector2;
     canvas: CanvasRenderingContext2D;
     color: string;
     shape: Array<Array<number>>;
 
-    constructor (canvas: CanvasRenderingContext2D, color: string, shape: Array<Array<number>>){
-        this.position = { x: 3, y: 0 };
+    constructor (canvas: CanvasRenderingContext2D, color: string, shape: Array<Array<number>>, spawnPosition : Vector2 = {x: 3, y: 0}){
+        this.spawnPosition = new Vector2(spawnPosition.x, spawnPosition.y);
+        this.position = spawnPosition;
         this.canvas = canvas;
         this.color = color;
         this.shape = shape;
+    }
+
+    drawToContext(context : CanvasRenderingContext2D): void {
+        context.fillStyle = this.color;
+        this.shape.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value > 0) {
+                    context.fillRect(x, y, 1, 1);
+                }
+            });
+        });
     }
 
     draw(): void{
@@ -27,7 +40,6 @@ abstract class Tetromino{
     }
 
     move(p : Vector2): void{
-        console.log(`x:${p.x} y:${p.y}`);
         this.position.x = p.x;
         this.position.y = p.y;
     }
@@ -35,6 +47,53 @@ abstract class Tetromino{
     setColor(newColor : string) {
         this.color = newColor;
     }
+    
+    rightRotation() {
+		this._transposeMatrix(this.shape);
+		this._reflectMatrixVertically(this.shape);
+
+	}
+
+	leftRotation() {
+		this._transposeMatrix(this.shape);
+		this._reflectMatrixHorizontally(this.shape);
+
+	}
+	doubleRotation() {
+		this.leftRotation();
+		this.leftRotation();
+	}
+
+	private _transposeMatrix(m : Array<Array<number>>) {
+		let n : Array<Array<number>>
+
+		n = JSON.parse(JSON.stringify(m));
+		for (let row = 0; row < m.length; ++row){
+			for (let col = 0; col < m.length; ++col){
+				m[row][col]  = n[col][row];
+			}
+		}
+	}
+	private _reflectMatrixVertically(m : Array <Array<number>>) {
+		let n : Array<Array<number>>
+
+		n = JSON.parse(JSON.stringify(m));
+		for (let row = 0; row < m.length; ++row){
+			for (let col = 0; col < m.length; ++col){
+				m[row][col]  = n[row][n.length - 1 - col];
+			}
+		}
+	}
+	private _reflectMatrixHorizontally(m : Array <Array<number>>) {
+		let n : Array<Array<number>>
+
+		n = JSON.parse(JSON.stringify(m));
+		for (let row = 0; row < m.length; ++row){
+			for (let col = 0; col < m.length; ++col){
+				m[row][col]  = n[n.length - 1 - row][col];
+			}
+		}
+	}
 }
 
 class Jtetromino extends Tetromino{
@@ -66,7 +125,7 @@ class Otetromino extends Tetromino{
             [3, 3],
             [3, 3],
         ];
-        super(canvas, color, shape);
+        super(canvas, color, shape, {x : 4, y : 0});
     }
 }
 
@@ -79,6 +138,13 @@ class Stetromino extends Tetromino{
         ];
         super(canvas, color, shape);
     }
+
+    rightRotation(): void {
+        super.leftRotation();
+    }
+    leftRotation(): void {
+        super.rightRotation();
+    }
 }
 
 class Ztetromino extends Tetromino{
@@ -90,14 +156,21 @@ class Ztetromino extends Tetromino{
         ];
         super(canvas, color, shape);
     }
+
+    rightRotation(): void {
+        super.leftRotation();
+    }
+    leftRotation(): void {
+        super.rightRotation();
+    }
 }
 
 class Ttetromino extends Tetromino{
     constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
-            [0, 0, 0],
-            [6, 6, 6],
             [0, 6, 0],
+            [6, 6, 6],
+            [0, 0, 0],
         ];
         super(canvas, color, shape);
     }
@@ -106,12 +179,18 @@ class Ttetromino extends Tetromino{
 class Itetromino extends Tetromino{
     constructor (canvas: CanvasRenderingContext2D, color : string){
         const shape: Array<Array<number>> = [
-            [0, 0, 7, 0],
-            [0, 0, 7, 0],
-            [0, 0, 7, 0],
-            [0, 0, 7, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [7, 7, 7, 7],
+            [0, 0, 0, 0],
         ];
         super(canvas, color, shape);
+    }
+    rightRotation(): void {
+        super.leftRotation();
+    }
+    leftRotation(): void {
+        super.rightRotation();
     }
 }
 

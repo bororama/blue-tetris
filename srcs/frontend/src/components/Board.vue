@@ -20,7 +20,9 @@ onMounted( ():void => {
 		<p>Score: <span id="score">0</span></p>
 		<p>Lines: <span id="lines">0</span></p>
 		<p>Level: <span id="level">0</span></p>
-		<canvas id="next" class="next"></canvas>
+		<br/>
+		<p>Next Piece: </p>
+		<canvas class="displayNextPiece board" width="100" height="100" ></canvas>
 	</div>
 </div>
 </template>
@@ -44,4 +46,8 @@ onMounted( ():void => {
 	border: 3px solid red;/* for testing purposes */
 }
 
+.displayNextPiece 
+{
+	width : 100px;	
+}
 </style>
