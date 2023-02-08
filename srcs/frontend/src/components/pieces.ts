@@ -3,6 +3,7 @@ import { Vector2 } from './constants'
 import	{ ref } from 'vue'
 
 abstract class Tetromino{
+    pieceId: number;
     spawnPosition: Vector2;
     position: Vector2;
     canvas: CanvasRenderingContext2D;
@@ -10,6 +11,7 @@ abstract class Tetromino{
     shape: Array<Array<number>>;
 
     constructor (canvas: CanvasRenderingContext2D, color: string, shape: Array<Array<number>>, spawnPosition : Vector2 = {x: 3, y: 0}){
+        this.pieceId = 0;
         this.spawnPosition = new Vector2(spawnPosition.x, spawnPosition.y);
         this.position = spawnPosition;
         this.canvas = canvas;
@@ -104,6 +106,7 @@ class Jtetromino extends Tetromino{
             [0, 0, 0],
         ];
         super(canvas, color, shape);
+        this.pieceId = 1;
     }
 }
 
@@ -115,6 +118,7 @@ class Ltetromino extends Tetromino{
             [0, 0, 0],
         ];
         super(canvas, color, shape);
+        this.pieceId = 2;
     }
 }
 
@@ -126,6 +130,7 @@ class Otetromino extends Tetromino{
             [3, 3],
         ];
         super(canvas, color, shape, {x : 4, y : 0});
+        this.pieceId = 3;
     }
 }
 
@@ -137,6 +142,7 @@ class Stetromino extends Tetromino{
             [4, 4, 0],
         ];
         super(canvas, color, shape);
+        this.pieceId = 4;
     }
 
     rightRotation(): void {
@@ -155,6 +161,7 @@ class Ztetromino extends Tetromino{
             [0, 5, 5],
         ];
         super(canvas, color, shape);
+        this.pieceId = 5;
     }
 
     rightRotation(): void {
@@ -173,6 +180,7 @@ class Ttetromino extends Tetromino{
             [0, 0, 0],
         ];
         super(canvas, color, shape);
+        this.pieceId = 6;
     }
 }
 
@@ -185,6 +193,7 @@ class Itetromino extends Tetromino{
             [0, 0, 0, 0],
         ];
         super(canvas, color, shape);
+        this.pieceId = 7;
     }
     rightRotation(): void {
         super.leftRotation();

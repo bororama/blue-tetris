@@ -38,6 +38,18 @@ const LEVEL = [
 	200,	
 ]
 
+const KEYS = [
+	'ArrowUp',
+	'ArrowRight', 
+	'ArrowDown', 
+	'ArrowLeft', 
+	'a', 
+	'c', 
+	'z', 
+	' ',
+]
+
+
 const MAX_LEVEL = 7;
 
 const GAME_SYSTEM = {
@@ -45,6 +57,7 @@ const GAME_SYSTEM = {
 	LINES_PER_LEVEL : LINES_PER_LEVEL,
 	LEVEL : LEVEL,
 	MAX_LEVEL : MAX_LEVEL,
+	KEYS : KEYS,
 }
 
 Object.freeze(GAME_SYSTEM);

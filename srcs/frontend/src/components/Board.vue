@@ -15,6 +15,12 @@ onMounted( ():void => {
 
 <template>
 <div class="grid" >
+	<div class="left-column">
+		<p>Round: <span id="round">0</span>/5</p>
+		<br/>
+		<p>Held Piece: </p>
+		<canvas class="displayHeldPiece board" width="100" height="100" ></canvas>
+	</div>
 	<canvas ref="boardReference" class="board" :width="board.width" :height="board.height" ></canvas>
 	<div class="right-column">
 		<p>Score: <span id="score">0</span></p>
@@ -23,6 +29,8 @@ onMounted( ():void => {
 		<br/>
 		<p>Next Piece: </p>
 		<canvas class="displayNextPiece board" width="100" height="100" ></canvas>
+		<br/>
+
 	</div>
 </div>
 </template>
@@ -32,10 +40,9 @@ onMounted( ():void => {
 .grid
 {
 	display: grid;
-	grid-template-columns: 320px 200px;
+	grid-template-columns: 200px 320px 200px;
 }
-
-.right-column
+.left-column, .right-column
 {
 	display: flex;
 	flex-direction: column;
@@ -46,7 +53,7 @@ onMounted( ():void => {
 	border: 3px solid red;/* for testing purposes */
 }
 
-.displayNextPiece 
+.displayNextPiece, .displayHeldPiece
 {
 	width : 100px;	
 }

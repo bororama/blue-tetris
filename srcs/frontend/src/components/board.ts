@@ -36,6 +36,7 @@ class Board {
 	height: number;
 	canvas: CanvasRenderingContext2D | null;
 	nextPieceCanvas : CanvasRenderingContext2D | null;
+	heldPieceCanvas : CanvasRenderingContext2D | null;
 	grid: Array<Array<number>>;
 	activePiece: Tetromino | null;
 	shadowPiece: Tetromino | null;
@@ -77,6 +78,7 @@ class Board {
 		this.height = constants.ROWS * constants.BLOCK_SIZE;
 		this.canvas = null;
 		this.nextPieceCanvas = null;
+		this.heldPieceCanvas = null;
 		this.grid = this.getEmptyBoardGrid();
 		this.activePiece = null;
 		this.shadowPiece = null;
@@ -127,9 +129,11 @@ class Board {
 		let tmpCanvas = <HTMLCanvasElement> document.querySelector('.displayNextPiece');
 
 		this.nextPieceCanvas = tmpCanvas.getContext('2d');
-		this.nextPieceCanvas!.fillStyle = 'red';
 		this.nextPieceCanvas!.scale(30, 30);
-
+		
+		tmpCanvas = <HTMLCanvasElement> document.querySelector('.displayHeldPiece');
+		this.heldPieceCanvas = tmpCanvas.getContext('2d');
+		this.heldPieceCanvas!.scale(30, 30);
 
 		this.pieceTemplate = [ 
 			new Jtetromino(this.canvas!, this.colorPalette[1]),
@@ -158,21 +162,29 @@ class Board {
 		if (this.initialize === true) {
 			window.addEventListener('keydown', e => {
 				let newPosition : Tetromino;
-				e.preventDefault();
-				
-				newPosition = _.cloneDeep(this.activePiece!);
-				if (e.key === 'c') {
-					this.holdPiece();
-				}
-				if (e.key === ' ') {
-					this.hardDrop(newPosition);
-					this.hardDropped = true;
-				} else {
-					const pressedKey = e.key as keyof typeof this.moves;
-					this.moves[pressedKey](newPosition)
-				}
-				if (this.validPosition(newPosition)){
-					this.activePiece = newPosition;
+
+				if (GAME_SYSTEM.KEYS.includes(e.key)){
+					e.preventDefault();
+					
+					newPosition = _.cloneDeep(this.activePiece!);
+					if (e.key === 'c') {
+						this.holdPiece();
+					}
+					else {
+						if (e.key === ' ') {
+							this.hardDrop(newPosition);
+							this.hardDropped = true;
+						} else {
+							const pressedKey = e.key as keyof typeof this.moves;
+							this.moves[pressedKey](newPosition)
+							if (e.key === 'ArrowUp' || e.key === 'z') {
+								this.unstickRotation(newPosition);
+							}
+						}
+						if (this.validPosition(newPosition)){
+							this.activePiece = newPosition;
+						}
+					}
 				}
 			})
 			this.initialize = false;
@@ -182,6 +194,8 @@ class Board {
 		this.gameLoop();
 	}
 	
+
+
 	gameOver() {
 		cancelAnimationFrame(this.requestId);
 		this.canvas!.fillStyle = 'black';
@@ -209,8 +223,7 @@ class Board {
 		this.shadowPiece!.setColor('#09090909');
 		this.hardDrop(this.shadowPiece!);
 
-		this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
-		this.nextPieceCanvas!.clearRect(0, 0, this.nextPieceCanvas!.canvas.width, this.nextPieceCanvas!.canvas.height);
+		this.clearAllCanvases();
 		this.draw();
 		this.requestId = requestAnimationFrame(this.gameLoop.bind(this));
 	}
@@ -232,13 +245,12 @@ class Board {
 		if (this.held) {
 			return ;
 		}
-		tmp = this.activePiece!;
+		tmp = _.cloneDeep(this.pieceTemplate[ this.activePiece!.pieceId - 1]!);
 		if (this.heldPiece === null) {
 			this.get_next_piece();
 		}
 		else {
 			this.activePiece = this.heldPiece;
-			this.activePiece.move(this.activePiece.spawnPosition);
 		}
 		this.heldPiece = tmp;
 		this.held = true;
@@ -247,7 +259,7 @@ class Board {
 	drop() : boolean {
 		let	ghostPiece = _.cloneDeep(this.activePiece!);
 
-		this.moves['ArrowDown'](ghostPiece);
+		this.moves.ArrowDown(ghostPiece);
 		if (this.validPosition(ghostPiece)) {
 			this.activePiece = ghostPiece;
 		} else {
@@ -330,14 +342,37 @@ class Board {
 		});
 		return isValid;
 	}
+
+	unstickRotation(rotation : Tetromino) {
+		let rightShift : Tetromino;
+		let leftShift : Tetromino;
+
+		if (!this.validPosition(rotation)) {
+			rightShift = _.cloneDeep(rotation);
+			leftShift = _.cloneDeep(rotation);
+			
+			this.moves.ArrowRight(rightShift);
+			this.moves.ArrowLeft(leftShift);
+			if (this.validPosition(rightShift)) {
+				this.moves.ArrowRight(rotation);
+			}
+			else if (this.validPosition(leftShift)) {
+				this.moves.ArrowLeft(rotation);				
+			}
+		}
+	}
 	collided(x : number, y :number) : boolean {
 		return (this.grid[x][y] !== 0);
 	}
-	draw(){
 
+
+	draw(){
 		this.shadowPiece!.draw();
 		this.activePiece!.draw();
 		this.pieceTemplate[this.pieceGenerator[this.pieceGenerator.length - 1] - 1]!.drawToContext(this.nextPieceCanvas!);
+		if (this.heldPiece !== null) {
+			this.heldPiece!.drawToContext(this.heldPieceCanvas!);
+		}
 		for (let row = 0; row < this.rows; ++row){
 			for (let col = 0; col < this.cols; ++col){
 				if (this.grid[row][col]) {
@@ -347,6 +382,13 @@ class Board {
 			}
 		}
 	}
+	
+	clearAllCanvases() {
+		this.canvas!.clearRect(0, 0, this.canvas!.canvas.width, this.canvas!.canvas.height);
+		this.nextPieceCanvas!.clearRect(0, 0, this.nextPieceCanvas!.canvas.width, this.nextPieceCanvas!.canvas.height);
+		this.heldPieceCanvas!.clearRect(0, 0, this.nextPieceCanvas!.canvas.width, this.nextPieceCanvas!.canvas.height);
+	}
+
 	aboveFloor(y : number): boolean{
 		return (y < this.rows);
 	}
