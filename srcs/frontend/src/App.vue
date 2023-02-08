@@ -2,10 +2,23 @@
 import { ref } from 'vue'
 import Board from './components/Board.vue'
 import { board } from './components/board'
+import { io } from 'socket.io-client'
 
-function play(): void{
-	/* the match-up part should prolly happen here */
-	Board
+const waiting = ref(false)
+
+function play(): void {
+	const ioSocket = io('http://10.11.11.3:3000');
+	ioSocket.emit('play');
+	waiting.value = true;
+
+	ioSocket.on('ready', () => {
+		waiting.value = false;
+		board.value.startGameLoop(ioSocket);
+	});
+
+	ioSocket.on('receive-line', (line) => {
+		console.log(line);
+	});
 }
 
 const gameBoard = ref<InstanceType<typeof Board>>();
@@ -17,7 +30,8 @@ const gameBoard = ref<InstanceType<typeof Board>>();
 </head>
 <h1>TETRIS</h1>
 <Board/>
-<button @click="board.startGameLoop()" class="play-button">Play</button>
+<button @click="play();" class="play-button">Play</button>
+<h3 v-if="waiting">Waiting for an opponent...</h3>
 </template>
 
 <style>

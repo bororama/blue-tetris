@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { EventModule } from './event/event.module';
+import { GameModule } from './game/game.module';
 
 @Module({
-  imports: [EventModule],
+  imports: [GameModule],
   controllers: [AppController],
   providers: [AppService],
 })

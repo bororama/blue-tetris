@@ -3,6 +3,7 @@ import	{ ref, resolveTransitionHooks } from 'vue';
 import  { Vector2 } from './constants'
 import  { Tetromino, Jtetromino, Ltetromino, Itetromino, Otetromino, Ztetromino, Stetromino, Ttetromino } from './pieces';
 import _ from 'lodash'
+import type { Socket } from 'socket.io-client';
 
 function clone(original : Tetromino) : Tetromino {
 	return JSON.parse(JSON.stringify(original));
@@ -51,6 +52,8 @@ class Board {
 	points : Array<number>;
 	requestId: number;
 	pieceGenerator: Array<number>;
+
+	socket: Socket | null;
 
 	time = {
 		start: 0,
@@ -109,6 +112,8 @@ class Board {
 
 		this.points = GAME_SYSTEM.POINTS;
 
+		this.socket = null;
+
 		this.account = new Proxy(this.accountValues, {
 			set : (target : any, key: string | symbol, value: any) => {
 				target[key] = value;
@@ -120,6 +125,7 @@ class Board {
 		this.requestId = 0;
 
 		this.pieceGenerator = [1, 2, 3, 4, 5, 6, 7].sort((a, b) => 0.5 - Math.random());
+
 	}
 
 	canvasInit(canvas: HTMLCanvasElement): void{
@@ -161,7 +167,8 @@ class Board {
 		this.held = false;
 	}
 
-	startGameLoop(): void {
+	startGameLoop(ioSocket: Socket): void {
+		this.socket = ioSocket;
 		if (this.initialize === true) {
 			window.addEventListener('keydown', e => {
 				let newPosition : Tetromino;
@@ -300,6 +307,9 @@ class Board {
 			this.account.level++;
 			this.account.lines = 0;
 			this.time.level = GAME_SYSTEM.LEVEL[this.account.level];
+		}
+		if (linesCleared) {
+			this.socket!.emit('send-line', linesCleared);
 		}
 	}
 

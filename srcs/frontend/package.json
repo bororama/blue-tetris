@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "vue": "^3.2.45"
+    "socket.io": "^4.6.0",
+    "socket.io-client": "^4.6.0",
+    "vue": "^3.2.45",
+    "vue-socket.io": "^3.0.10"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.191",
