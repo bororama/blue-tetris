@@ -35,8 +35,8 @@ class Board {
 	width: number;
 	height: number;
 	canvas: CanvasRenderingContext2D | null;
-	nextPieceCanvas : CanvasRenderingContext2D | null;
-	heldPieceCanvas : CanvasRenderingContext2D | null;
+	nextPieceCanvas : CanvasRenderingContext2D | null;
+	heldPieceCanvas : CanvasRenderingContext2D | null;
 	grid: Array<Array<number>>;
 	activePiece: Tetromino | null;
 	shadowPiece: Tetromino | null;
@@ -156,6 +156,9 @@ class Board {
 		this.account.lines = 0;
 		this.account.level = 0;
 		this.time.level = GAME_SYSTEM.LEVEL[this.account.level];
+		this.activePiece = null;
+		this.heldPiece = null;
+		this.held = false;
 	}
 
 	startGameLoop(): void {
