@@ -38,6 +38,14 @@ const LEVEL = [
 	200,	
 ]
 
+const GARBAGE = [
+	0,
+	0,
+	1,
+	2,
+	4,
+]
+
 const KEYS = [
 	'ArrowUp',
 	'ArrowRight', 
@@ -56,6 +64,7 @@ const GAME_SYSTEM = {
 	POINTS : POINTS,
 	LINES_PER_LEVEL : LINES_PER_LEVEL,
 	LEVEL : LEVEL,
+	GARBAGE : GARBAGE,
 	MAX_LEVEL : MAX_LEVEL,
 	KEYS : KEYS,
 }

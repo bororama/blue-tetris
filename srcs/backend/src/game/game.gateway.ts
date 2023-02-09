@@ -28,4 +28,9 @@ export class GameGateway {
   sendLine(@MessageBody() lines: number, @ConnectedSocket() client: Socket) {
     this.gameService.sendLineToOpponent(client, lines);
   }
+
+  @SubscribeMessage('game-over')
+  concludeGame(@ConnectedSocket() client: Socket) {
+    this.gameService.reportGameOver(client);
+  }
 }

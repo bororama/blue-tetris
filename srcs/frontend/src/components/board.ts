@@ -108,6 +108,7 @@ class Board {
 			'red',
 			'purple',
 			'aquamarine',
+			'grey',
 		]
 
 		this.points = GAME_SYSTEM.POINTS;
@@ -204,15 +205,20 @@ class Board {
 		this.gameLoop();
 	}
 	
-
-
 	gameOver() {
+		this.socket!.emit('game-over');
+	}
+
+	stopGame(won : boolean) {
+
+		let message : string = won ? 'YOU WIN!' : 'YOU LOSE LMAO';
+
 		cancelAnimationFrame(this.requestId);
 		this.canvas!.fillStyle = 'black';
 		this.canvas!.fillRect(1, 3, 8, 1.2);
 		this.canvas!.font = '1px Arial';
 		this.canvas!.fillStyle = 'red';
-		this.canvas!.fillText('GAME OVER', 1.8, 4);
+		this.canvas!.fillText(message, 1.8, 4);
 	}
 	
 	gameLoop(now : number = 0) {
@@ -238,6 +244,9 @@ class Board {
 		this.requestId = requestAnimationFrame(this.gameLoop.bind(this));
 	}
 
+	/************************************/
+	/******** Core Game Methods *********/
+	/************************************/
 	pieceGenerationAlgorithm(): number {
 		let returnPiece = this.pieceGenerator.pop()! - 1;
 		if (this.pieceGenerator.length === 0) {
@@ -266,6 +275,16 @@ class Board {
 		this.held = true;
 	}
 
+	/* 
+		drop(): Attempts to drop the active piece one row down
+		each animation frame. If this 'ghost' position is valid,
+		it becomes the piece's actual position, if it's not valid then
+		the piece has reached its vertical limit. When a piece reaches said 
+		limit, a call to freeze() turns it into a static
+		part of the grid, then a new active piece is generated.
+		(We could use this function to lock the piece only after 15 moves or inactivity
+			as per the tetris guidelines)
+	*/
 	drop() : boolean {
 		let	ghostPiece = _.cloneDeep(this.activePiece!);
 
@@ -283,6 +302,36 @@ class Board {
 			}
 		}
 		return true;
+	}
+
+	/*
+		freeze(): Saves the current state of the active pieces' shape and
+		position in the board's grid. In other words, on each call, the active piece
+		freezes in place.
+		This is used for rendering and colliction detection
+	*/
+	freeze() {
+		this.activePiece?.shape.forEach((row, y) => {
+			row.forEach((value, x) =>{
+				if (value > 0){
+					this.grid[y + this.activePiece!.position.y][x + this.activePiece!.position.x] = value;
+				}
+			});
+		});
+	}
+
+	hardDrop(piece : Tetromino) : void {
+		let ghostPiece : Tetromino;
+		let newPosition: Vector2;
+
+		ghostPiece = _.cloneDeep(piece);
+		newPosition = new Vector2(ghostPiece.position.x, ghostPiece.position.y);
+		while (this.validPosition(ghostPiece)){
+			newPosition.x = ghostPiece.position.x;
+			newPosition.y = ghostPiece.position.y;
+			this.moves.ArrowDown(ghostPiece);
+   		}
+		piece.position = newPosition;
 	}
 
 	getLineClearPoints(linesCleared : number) {
@@ -313,28 +362,31 @@ class Board {
 		}
 	}
 
-	freeze() {
-		this.activePiece?.shape.forEach((row, y) => {
-			row.forEach((value, x) =>{
-				if (value > 0){
-					this.grid[y + this.activePiece!.position.y][x + this.activePiece!.position.x] = value;
-				}
-			});
-		});
+	generateGarbage(linesReceived : number) : void {
+		let garbageLine : Array<number> = new Array(this.cols);
+
+		garbageLine.fill(8);
+		garbageLine[Math.floor(Math.random() * this.cols)] = 0;
+		for (let i : number = 0; i < GAME_SYSTEM.GARBAGE[linesReceived]; ++i) {
+			this.grid.shift();
+			this.grid.push(garbageLine);
+		}
+	}
+	/**********************************/
+	/******** Collision system ********/
+	/**********************************/
+
+	aboveFloor(y : number): boolean{
+		return (y < this.rows);
 	}
 
-	hardDrop(piece : Tetromino) : void {
-		let ghostPiece : Tetromino;
-		let newPosition: Vector2;
+	insideWalls(x : number): boolean{
+		return (0 <= x && x < this.cols);
+	}
 
-		ghostPiece = _.cloneDeep(piece);
-		newPosition = new Vector2(ghostPiece.position.x, ghostPiece.position.y);
-		while (this.validPosition(ghostPiece)){
-			newPosition.x = ghostPiece.position.x;
-			newPosition.y = ghostPiece.position.y;
-			this.moves.ArrowDown(ghostPiece);
-   		}
-		piece.position = newPosition;
+
+	collided(x : number, y :number) : boolean {
+		return (this.grid[x][y] !== 0);
 	}
 
 	validPosition(piece: Tetromino) : boolean {
@@ -374,10 +426,12 @@ class Board {
 			}
 		}
 	}
-	collided(x : number, y :number) : boolean {
-		return (this.grid[x][y] !== 0);
-	}
 
+
+
+	/**************************************/
+	/******* Canvas drawing methods *******/
+	/**************************************/
 
 	draw(){
 		this.shadowPiece!.draw();
@@ -402,12 +456,7 @@ class Board {
 		this.heldPieceCanvas!.clearRect(0, 0, this.nextPieceCanvas!.canvas.width, this.nextPieceCanvas!.canvas.height);
 	}
 
-	aboveFloor(y : number): boolean{
-		return (y < this.rows);
-	}
-	insideWalls(x : number): boolean{
-		return (0 <= x && x < this.cols);
-	}
+
 }
 
 export const board = ref( new Board());

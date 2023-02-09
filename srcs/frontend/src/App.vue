@@ -5,9 +5,9 @@ import { board } from './components/board'
 import { io } from 'socket.io-client'
 
 const waiting = ref(false)
+const ioSocket = io('http://10.11.15.4:3000');
 
 function play(): void {
-	const ioSocket = io('http://10.11.11.3:3000');
 	ioSocket.emit('play');
 	waiting.value = true;
 
@@ -17,7 +17,11 @@ function play(): void {
 	});
 
 	ioSocket.on('receive-line', (line) => {
-		console.log(line);
+		board.value.generateGarbage(line);
+	});
+
+	ioSocket.on('stop-game', (won) => {
+		board.value.stopGame(won);
 	});
 }
 
