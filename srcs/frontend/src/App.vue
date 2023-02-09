@@ -5,7 +5,7 @@ import { board } from './components/board'
 import { io } from 'socket.io-client'
 
 const waiting = ref(false)
-const ioSocket = io('http://10.11.15.2:3000');
+const ioSocket = io(`http://${import.meta.env.VITE_HOST_IP}:3000`);
 
 function play(): void {
 	ioSocket.emit('play');

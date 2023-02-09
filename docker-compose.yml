@@ -8,8 +8,6 @@ services:
     container_name: backend
     tty: true
     restart: always
-    env_file:
-      - ./.env
     volumes:
       - type: bind
         source: ./srcs/backend
@@ -23,6 +21,8 @@ services:
     container_name: frontend
     tty: true
     restart: always
+    environment:
+      VITE_HOST_IP: ${IP:-host.docker.internal}
     volumes:
       - type: bind
         source: ./srcs/frontend
