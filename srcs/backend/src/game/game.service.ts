@@ -10,10 +10,10 @@ export class GameService {
   }
 
   startGame(client: Socket) {
-    console.log(`Client : ${client.id}`);
-    if (this.players.length < 2 && this.players.find((e) => {
-      e === client;
-    }) === undefined) {
+    if (
+      this.players.length < 2 &&
+      this.players.find((e) => e === client) === undefined
+    ) {
       this.players.push(client);
     }
 
@@ -28,9 +28,9 @@ export class GameService {
       : this.players[0].emit('receive-line', lines);
   }
 
-  reportGameOver(loser : Socket) {
-    let winner : Socket = this.players[0] == loser ?
-    this.players[1] : this.players[0];
+  reportGameOver(loser: Socket) {
+    const winner: Socket =
+      this.players[0] == loser ? this.players[1] : this.players[0];
 
     winner.emit('stop-game', true);
     loser.emit('stop-game', false);
